@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const accessKey = "c4544414-2db3-489a-8de2-e39e4acd3bd9";
+const accessKey = "at_RW5X8WKIFN5kv9xftNNQuz4zemX3u";
 
 // Optional custom marker icon fix (Leaflet icon issue in React)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,31 +15,32 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+function ChangeView({ center }) {
+  const map = useMap();
+  map.setView(center, 13);
+  return null;
+}
+
 export default function App() {
-  const [ip, setIp] = useState("67.250.186.196");
-  const [result, setResult] = useState({});
-  const [lat, setLat] = useState(0);
-  const [lng, setLng] = useState(0);
+  const [ip, setIp] = useState("");
+  const [ipData, setIpData] = useState(null);
+  const [position, setPosition] = useState([0, 0]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(function () {
     async function getIP() {
-      const res = await fetch("https://api.ipify.org?format=json");
+      try {
+        setIsLoading(true);
+        const res = await axios.get(
+          `https://geo.ipify.org/api/v2/country,city?apiKey=${accessKey}`
+        );
 
-      const data = await res.json();
-      console.log(data.ip);
-      setIp(data.ip);
-
-      const response = await fetch(
-        `https://apiip.net/api/check?ip=${data.ip}&accessKey=${accessKey}`
-      );
-
-      // Decode JSON response:
-      const result = await response.json();
-      setResult(result);
-      setLat(result.latitude);
-      setLng(result.longitude);
-      // Output the "code" value inside "currency" object
-      console.log(result);
+        setIpData(res.data);
+        setPosition([res.data.location.lat, res.data.location.lng]);
+        setIsLoading(false);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     getIP();
@@ -46,58 +48,73 @@ export default function App() {
 
   async function handleFetch(e) {
     e.preventDefault();
-    // Set endpoint and your access key
+    if (!ip.trim()) return;
 
-    // Make a request and store the response
-    const response = await fetch(
-      `https://apiip.net/api/check?ip=${ip}&accessKey=${accessKey}`
-    );
+    try {
+      setIsLoading(true);
+      const res = await axios.get(
+        `https://geo.ipify.org/api/v2/country,city?apiKey=${accessKey}&ipAddress=${ip}`
+      );
 
-    // Decode JSON response:
-    const result = await response.json();
-    // Output the "code" value inside "currency" object
-    setResult(result);
-    console.log(result);
+      setIpData(res.data);
+      console.log(res.data);
+      setPosition([res.data.location.lat, res.data.location.lng]);
+
+      setIp("");
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+      alert("Invalid IP address");
+    }
   }
 
   return (
     <>
       <Background>
         <BgPattern />
-        <BgMap result={result} lat={lat} lng={lng} />
+        <BgMap ipData={ipData} position={position} />
       </Background>
       <Main>
-        <IPSearch ip={ip} setIp={setIp} onSubmit={handleFetch} />
-        <IPSearchResult result={result} />
+        {isLoading && <Loader />}
+        {!isLoading && (
+          <>
+            <IPSearch ip={ip} setIp={setIp} onSubmit={handleFetch} />
+            <IPSearchResult ipData={ipData} />
+          </>
+        )}
       </Main>
     </>
   );
 }
 
+function Loader() {
+  return <p className="loader">Loading...</p>;
+}
 function BgPattern() {
   return <img className="bg-image" src="./pattern-bg-desktop.png" />;
 }
 
-function BgMap({ result, lat, lng }) {
-  const position = [lat, lng];
-  // const position = [6.5244, 3.3792];
-
+function BgMap({ ipData, position }) {
   return (
     <>
-      <MapContainer
-        center={position}
-        zoom={13}
-        style={{ height: "100vh", width: "100%" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+      {ipData && (
+        <MapContainer
+          center={position}
+          zoom={13}
+          style={{ height: "100vh", width: "100%" }}
+        >
+          <ChangeView center={position} />
 
-        <Marker position={position}>
-          <Popup>You are viewing {result.city} 📍</Popup>
-        </Marker>
-      </MapContainer>
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+
+          <Marker position={position}>
+            <Popup>You are viewing {ipData.location.city} 📍</Popup>
+          </Marker>
+        </MapContainer>
+      )}
     </>
   );
 }
@@ -121,37 +138,42 @@ function IPSearch({ ip, setIp, onSubmit }) {
   );
 }
 
-function IPSearchResult({ result }) {
+function IPSearchResult({ ipData }) {
   return (
-    <div className="result-sections">
-      <section className="border-div">
-        <p>Ip Address</p>
-        <p>
-          <em>{result.ip}</em>
-        </p>
-      </section>
-      <section className="border-div">
-        <p>Location</p>
-        <p>
-          <em>
-            {result.regionName}, {result.regionCode} {result.postalCode}
-          </em>
-        </p>
-      </section>
-      <section className="border-div">
-        <p>Latitude</p>
-        <p>
-          {/* <em>UTC:-05:00</em> */}
-          <em>{result.latitude}</em>
-        </p>
-      </section>
-      <section>
-        <p>Longitude</p>
-        <p>
-          <em>{result.longitude}</em>
-        </p>
-      </section>
-    </div>
+    <>
+      {ipData && (
+        <div className="result-sections">
+          <section className="border-div">
+            <p>Ip Address</p>
+            <p>
+              <em>{ipData.ip}</em>
+            </p>
+          </section>
+          <section className="border-div">
+            <p>Location</p>
+            <p>
+              <em>
+                {ipData.location.city}, {ipData.location.country}{" "}
+                {ipData.location.region}
+              </em>
+            </p>
+          </section>
+          <section className="border-div">
+            <p>Timezone</p>
+            <p>
+              {/* <em>UTC:-05:00</em> */}
+              <em>UTC: {ipData.location.timezone}</em>
+            </p>
+          </section>
+          <section>
+            <p>ISP</p>
+            <p>
+              <em>{ipData.isp}</em>
+            </p>
+          </section>
+        </div>
+      )}
+    </>
   );
 }
 

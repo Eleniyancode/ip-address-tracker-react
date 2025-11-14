@@ -61,3 +61,23 @@ form button {
   padding: 10px;
   background-color: black;
 }
+
+.loader {
+  font-size: 24px;
+  color: red;
+}
+
+@media (max-width: 600px) {
+  main {
+    top: 0;
+  }
+  .result-sections {
+    flex-direction: column;
+  }
+  .border-div {
+    border: 0px;
+  }
+  h2 {
+    color: black;
+  }
+}
