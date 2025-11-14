@@ -1,0 +1,63 @@
+@import "leaflet/dist/leaflet.css";
+
+body {
+  /* display: flex;
+  justify-content: center;
+  align-items: center; */
+  position: relative;
+  max-height: 100vh;
+}
+
+.bg-image {
+  width: 100%;
+}
+
+main {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translate(-50%);
+  /*height: 50%; */
+  width: 60%;
+  text-align: center;
+  z-index: 19999;
+  /* border: 2px solid white; */
+}
+
+.result-sections {
+  display: flex;
+  border: 2px solid white;
+  margin-top: 40px;
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+section {
+  flex-grow: 1;
+  text-align: left;
+  padding-inline: 10px;
+}
+
+.border-div {
+  border-right: 1px solid gray;
+}
+
+h2 {
+  color: white;
+  font-size: 32px;
+}
+
+form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+form input {
+  padding: 10px;
+}
+form button {
+  padding: 10px;
+  background-color: black;
+}
