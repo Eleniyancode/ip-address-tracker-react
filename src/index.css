@@ -81,3 +81,10 @@ form button {
     color: black;
   }
 }
+
+@media (min-width: 601px) and (max-width: 900px) {
+  /* Styles for tablets */
+  main {
+    top: 0;
+  }
+}
